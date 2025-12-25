@@ -1,0 +1,34 @@
+{
+  "config": {
+    "error": {
+      "host_required": "MQTT host is required (or ensure a broker advertises _mqtt._tcp.local.).",
+      "invalid_auth_token": "Auth token is required.",
+      "invalid_device_ids": "Device IDs must be comma-separated numbers.",
+      "invalid_user_id": "User ID must be numeric."
+    },
+    "step": {
+      "user": {
+        "data": {
+          "device_ids": "Device IDs (comma-separated, optional)",
+          "mqtt_host": "MQTT host",
+          "mqtt_port": "MQTT port"
+        },
+        "description": "Enter your local MQTT broker host and port. Flame Boss controllers publish on topics like flameboss/DEVICE_ID/send/data.",
+        "title": "Connect to Flame Boss local MQTT"
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "local_token": "Auth token for setpoint updates (optional)",
+          "device_ids": "Device IDs (comma-separated, optional)"
+        },
+        "description": "Limit to specific Device IDs (optional). Leave blank for auto-discovery.",
+        "title": "Flame Boss options"
+      }
+    }
+  },
+  "title": "Flame Boss (Local MQTT)"
+}

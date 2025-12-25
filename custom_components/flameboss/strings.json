@@ -1,0 +1,22 @@
+{
+  "config": {
+    "error": {
+      "invalid_auth_token": "Auth token is required.",
+      "invalid_device_ids": "Device IDs must be comma-separated numbers.",
+      "invalid_user_id": "User ID must be numeric."
+    },
+    "step": {
+      "user": {
+        "data": {
+          "auth_token": "Auth token",
+          "device_ids": "Device IDs (comma-separated, optional)",
+          "use_tls": "Use TLS (mqtts on 8883)",
+          "user_id": "User ID"
+        },
+        "description": "Enter your Flame Boss developer MQTT credentials (from myflameboss.com/users/dev). MQTT username is 'T-' + User ID (example: T-167652). Password is your auth token.",
+        "title": "Flame Boss"
+      }
+    }
+  },
+  "title": "Flame Boss (MQTT Cloud)"
+}
