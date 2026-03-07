@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 import voluptuous as vol
 
 from homeassistant import config_entries
@@ -17,6 +18,7 @@ from .const import (
 )
 
 _MQTT_ZC_TYPE = "_mqtt._tcp.local."
+_LOGGER = logging.getLogger(__name__)
 
 
 def _parse_device_ids(raw: str) -> list[int]:
@@ -51,7 +53,8 @@ async def _discover_mqtt_brokers(hass: HomeAssistant) -> list[tuple[str, int]]:
                 seen.add(hp)
                 out.append(hp)
         return out
-    except Exception:
+    except Exception as err:  # noqa: BLE001
+        _LOGGER.debug("MQTT broker discovery failed: %s", err)
         return []
 
 

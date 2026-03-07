@@ -149,15 +149,3 @@ class FlameBossSetTemperature(FlameBossEntity, SensorEntity):
             return float(val)
         except Exception:  # noqa: BLE001
             return None
-
-
-def _build_entities(coordinator, device_id: int):
-    return [
-        FlameBossBlowerDuty(coordinator, device_id),
-        FlameBossMeatTemp(coordinator, device_id, 1),
-        FlameBossMeatTemp(coordinator, device_id, 2),
-        FlameBossMeatTemp(coordinator, device_id, 3),
-        FlameBossPitTemp(coordinator, device_id),
-        FlameBossSetTemp(coordinator, device_id),
-        FlameBossOnlineBinarySensor(coordinator, device_id),
-    ]

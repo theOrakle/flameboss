@@ -1,10 +1,7 @@
 {
   "config": {
     "error": {
-      "host_required": "MQTT host is required (or ensure a broker advertises _mqtt._tcp.local.).",
-      "invalid_auth_token": "Auth token is required.",
-      "invalid_device_ids": "Device IDs must be comma-separated numbers.",
-      "invalid_user_id": "User ID must be numeric."
+      "host_required": "MQTT host is required (or ensure a broker advertises _mqtt._tcp.local.)."
     },
     "step": {
       "user": {
@@ -22,7 +19,6 @@
     "step": {
       "init": {
         "data": {
-          "local_token": "Auth token for setpoint updates (optional)",
           "device_ids": "Device IDs (comma-separated, optional)"
         },
         "description": "Limit to specific Device IDs (optional). Leave blank for auto-discovery.",

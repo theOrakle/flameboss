@@ -183,6 +183,7 @@ class FlameBossCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 elif name == "versions":
                     dev["hw_id"] = payload.get("hw_id")
                     dev["app"] = payload.get("app")
+                    dev["app_version"] = payload.get("app")
                     dev["online"] = True
 
                 all_data = dict(self.data or {})

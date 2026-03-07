@@ -19,12 +19,10 @@ from .const import (
     CONF_MQTT_USERNAME,
     CONF_MQTT_PORT,
     CONF_MQTT_HOST,
-    DEFAULT_HOST,
     DEFAULT_PORT_TLS,
     DEFAULT_PORT_PLAINTEXT,
-    TOPIC_SEND_DATA, TOPIC_SEND_FW,
-    TOPIC_SEND_WILDCARD,
-    TOPIC_SEND_OPEN,
+    TOPIC_SEND_DATA,
+    TOPIC_SEND_FW,
     TOPIC_RECV,
 )
 
@@ -210,18 +208,5 @@ class FlameBossMqttClient:
 
 
     async def set_pit_setpoint(self, device_id: int, setpoint_tenth_c: int) -> None:
-        """Publish a new pit setpoint to the controller."""
-        # Publish as JSON to the recv topic (local broker forwards to controller)
-        payload = json.dumps({"name": "set_temp", "set_temp": int(setpoint_tenth_c)})
-        # Connect just for publish to keep things simple
-        tls_context = self._tls_context if self._cfg.use_tls else None
-        username = self._cfg.username or None
-        password = self._cfg.password or None
-        async with aiomqtt.Client(
-            hostname=self._cfg.host,
-            port=self._cfg.port,
-            username=username,
-            password=password,
-            tls_context=tls_context,
-        ) as client:
-            await client.publish(TOPIC_RECV.format(device_id=device_id), payload)
+        """Backwards-compatible alias for setpoint publish."""
+        await self.async_publish_set_temp_tenth_c(device_id, setpoint_tenth_c)
