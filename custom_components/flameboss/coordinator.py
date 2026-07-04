@@ -144,7 +144,7 @@ class FlameBossCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         # add entities dynamically.
         if device_id not in self._discovered_device_ids:
             self._discovered_device_ids.add(device_id)
-            self.hass.loop.call_soon_threadsafe(async_dispatcher_send, self.hass, _device_discovered_signal(self.entry.entry_id), device_id)
+            async_dispatcher_send(self.hass, _device_discovered_signal(self.entry.entry_id), device_id)
 
         async def _update() -> None:
             async with self._lock:
@@ -183,7 +183,7 @@ class FlameBossCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 elif name == "versions":
                     dev["hw_id"] = payload.get("hw_id")
                     dev["app"] = payload.get("app")
-                    dev["app_version"] = payload.get("app")
+                    dev["app_version"] = payload.get("app_version")
                     dev["online"] = True
 
                 all_data = dict(self.data or {})
