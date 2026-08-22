@@ -6,7 +6,7 @@ import voluptuous as vol
 
 from homeassistant import config_entries
 from homeassistant.data_entry_flow import FlowResult
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 
 from .const import (
     CONF_DEVICE_IDS,
@@ -88,6 +88,14 @@ class FlameBossConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         return self.async_show_form(step_id="user", data_schema=self._schema(), errors=errors)
 
+    @staticmethod
+    @callback
+    def async_get_options_flow(
+        config_entry: config_entries.ConfigEntry,
+    ) -> FlameBossOptionsFlow:
+        """Create the options flow."""
+        return FlameBossOptionsFlow(config_entry)
+
     def _schema(self) -> vol.Schema:
         return vol.Schema(
             {
@@ -98,7 +106,16 @@ class FlameBossConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         )
 
 
-class FlameBossOptionsFlow(config_entries.OptionsFlow):
+class FlameBossOptionsFlow(config_entries.OptionsFlowWithReload):
+    """Options flow for Flame Boss: lets the device ID allowlist be edited.
+
+    Subclassing OptionsFlowWithReload (rather than plain OptionsFlow) makes
+    HA reload the entry safely via its own state machine after options are
+    saved, so a changed device list actually re-subscribes MQTT topics and
+    re-seeds entities instead of silently doing nothing until a manual
+    restart.
+    """
+
     def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
         self._config_entry = config_entry
 
@@ -113,14 +130,9 @@ class FlameBossOptionsFlow(config_entries.OptionsFlow):
             existing_ids = self._config_entry.data.get(CONF_DEVICE_IDS, [])
         default_ids = ",".join(str(i) for i in existing_ids)
 
-
         schema = vol.Schema(
             {
                 vol.Optional(CONF_DEVICE_IDS, default=default_ids): str,
             }
         )
         return self.async_show_form(step_id="init", data_schema=schema)
-
-
-def async_get_options_flow(config_entry: config_entries.ConfigEntry) -> FlameBossOptionsFlow:
-    return FlameBossOptionsFlow(config_entry)
