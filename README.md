@@ -1,7 +1,7 @@
 # Flame Boss for Home Assistant
 
 <p align="center">
-  <img src="assets/flameboss.svg" alt="Flame Boss" width="120" />
+  <img src="assets/flameboss.svg" alt="Flame Boss" width="280" />
 </p>
 
 Home Assistant integration for Flame Boss Smoker Controller Kit.
