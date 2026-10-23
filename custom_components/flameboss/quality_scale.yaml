@@ -1,0 +1,114 @@
+# Home Assistant Integration Quality Scale tracking
+# https://developers.home-assistant.io/docs/core/integration-quality-scale/
+rules:
+  # Bronze
+  action-setup:
+    status: exempt
+    comment: "The integration provides no actions."
+  appropriate-polling:
+    status: exempt
+    comment: "Push integration; the controllers publish over MQTT, nothing is polled."
+  brands:
+    status: exempt
+    comment: "Custom integration: the brands repository no longer accepts new custom integrations. Icons and logos ship in the integration's brand/ folder, which Home Assistant 2026.3+ uses."
+  common-modules: done
+  config-flow: done
+  config-flow-test-coverage: done
+  dependency-transparency: done
+  docs-actions:
+    status: exempt
+    comment: "The integration provides no actions."
+  docs-conditions:
+    status: exempt
+    comment: "The integration provides no conditions or triggers."
+  docs-high-level-description: done
+  docs-installation-instructions: done
+  docs-removal-instructions: done
+  docs-triggers:
+    status: exempt
+    comment: "The integration provides no conditions or triggers."
+  entity-event-setup:
+    status: done
+    comment: "Platforms subscribe to the discovery signal in async_setup_entry and unsubscribe with entry.async_on_unload."
+  entity-unique-id: done
+  has-entity-name: done
+  runtime-data: done
+  test-before-configure: done
+  test-before-setup:
+    status: exempt
+    comment: "The broker and controllers may be offline at startup, so setup never waits for them; the MQTT client reconnects in the background."
+  unique-config-entry: done
+  # Silver
+  action-exceptions:
+    status: todo
+  config-entry-unloading: done
+  docs-configuration-parameters:
+    status: todo
+  docs-installation-parameters:
+    status: todo
+  entity-unavailable:
+    status: todo
+    comment: "Entities keep their last value while a controller is offline; the Online sensor reports connectivity."
+  integration-owner: done
+  log-when-unavailable:
+    status: done
+    comment: "The MQTT client logs once when the broker becomes unavailable and again when it reconnects."
+  parallel-updates:
+    status: todo
+  reauthentication-flow:
+    status: exempt
+    comment: "The local MQTT broker is used without credentials."
+  test-coverage:
+    status: todo
+  # Gold
+  devices: done
+  diagnostics:
+    status: todo
+  discovery:
+    status: todo
+  discovery-update-info:
+    status: todo
+  docs-data-update:
+    status: todo
+  docs-examples:
+    status: todo
+  docs-known-limitations:
+    status: todo
+  docs-supported-devices:
+    status: todo
+  docs-supported-functions:
+    status: todo
+  docs-troubleshooting:
+    status: todo
+  docs-use-cases:
+    status: todo
+  dynamic-devices:
+    status: done
+    comment: "New controllers seen on the broker get entities without a reload."
+  entity-category:
+    status: todo
+  entity-device-class:
+    status: todo
+  entity-disabled-by-default:
+    status: todo
+  entity-translations:
+    status: todo
+  exception-translations:
+    status: todo
+  icon-translations:
+    status: todo
+  reconfiguration-flow:
+    status: todo
+  repair-issues:
+    status: todo
+  stale-devices:
+    status: todo
+  # Platinum
+  async-dependency:
+    status: done
+    comment: "aiomqtt is asyncio based."
+  inject-websession:
+    status: exempt
+    comment: "Uses MQTT, not HTTP."
+  strict-typing:
+    status: todo

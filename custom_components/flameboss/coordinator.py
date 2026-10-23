@@ -11,7 +11,6 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.helpers.event import async_call_later, async_track_time_interval
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
-from homeassistant.util import dt as dt_util
 
 from .api import FlameBossMqttClient, FlameBossMqttConfig
 from .const import DOMAIN, LOGGER, SIGNAL_DEVICE_DISCOVERED
@@ -47,22 +46,25 @@ class DeviceState:
     last_seen: float
 
 
+type FlameBossConfigEntry = ConfigEntry[FlameBossCoordinator]
+
+
 class FlameBossCoordinator(DataUpdateCoordinator[dict[str, Any]]):
-    _last_debug_refresh: float = 0.0  # fallback default
     """Coordinator for Flame Boss local MQTT (push-based)."""
 
-    def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
+    config_entry: FlameBossConfigEntry
+
+    def __init__(self, hass: HomeAssistant, entry: FlameBossConfigEntry) -> None:
         self._last_debug_refresh = 0.0
-        self.hass = hass
         self.entry = entry
 
         # DataUpdateCoordinator uses .data; initialize to {} not None
         super().__init__(
             hass,
             LOGGER,
+            config_entry=entry,
             name=DOMAIN,
             update_interval=None,  # push-only
-            update_method=self._async_update_data,
         )
 
         self.data: dict[str, Any] = {}
@@ -75,6 +77,7 @@ class FlameBossCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         self._last_message_monotonic: dict[int, float] = {}
         self._offline_unsub = None
+        self._push_unsub = None
 
         # Autodiscovery: device IDs we've seen on the broker.
         self._discovered_device_ids: set[int] = set()
@@ -97,6 +100,10 @@ class FlameBossCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         if self._offline_unsub is not None:
             self._offline_unsub()
             self._offline_unsub = None
+        if self._push_unsub is not None:
+            self._push_unsub()
+            self._push_unsub = None
+            self._pending_refresh = False
         await self._client.stop()
 
     async def _offline_check(self, _now) -> None:
@@ -114,10 +121,11 @@ class FlameBossCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     self.data = all_data
                     changed = True
         if changed:
-            self._schedule_refresh()
+            self._schedule_push()
 
     @callback
-    def _schedule_refresh(self) -> None:
+    def _schedule_push(self) -> None:
+        """Coalesce bursts of MQTT messages into one state push per second."""
         if self._pending_refresh:
             return
         self._pending_refresh = True
@@ -125,6 +133,7 @@ class FlameBossCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         @callback
         def _do(_now) -> None:
             self._pending_refresh = False
+            self._push_unsub = None
             # This is safe on the event loop
             self.async_set_updated_data(self.data)
             now = time.monotonic()
@@ -132,7 +141,7 @@ class FlameBossCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 self._last_debug_refresh = now
                 LOGGER.debug("Flame Boss: state refresh pushed")
 
-        async_call_later(self.hass, 1.0, _do)
+        self._push_unsub = async_call_later(self.hass, 1.0, _do)
 
     @callback
     def _on_mqtt_message(self, device_id: int, payload: dict[str, Any], topic: str) -> None:
@@ -190,7 +199,7 @@ class FlameBossCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 all_data[str(device_id)] = dev
                 self.data = all_data
 
-            self._schedule_refresh()
+            self._schedule_push()
 
         self.hass.async_create_task(_update())
 

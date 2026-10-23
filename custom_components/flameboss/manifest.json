@@ -1,5 +1,7 @@
 {
-  "codeowners": [],
+  "codeowners": [
+    "@theOrakle"
+  ],
   "config_flow": true,
   "documentation": "https://github.com/theOrakle/flameboss",
   "domain": "flameboss",
@@ -9,5 +11,6 @@
   "requirements": [
     "aiomqtt"
   ],
-  "version": "1.1.9"
+  "version": "1.1.9",
+  "quality_scale": "bronze"
 }

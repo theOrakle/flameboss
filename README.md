@@ -6,6 +6,8 @@
 
 Home Assistant integration for Flame Boss Smoker Controller Kit.
 
+It connects to the MQTT broker your Flame Boss controllers publish to (local push, no cloud). Each controller becomes a device with a climate entity for the pit temperature and target, sensors for the meat probes and blower duty, and an Online sensor. Controllers can be limited to specific device IDs or auto-discovered from the broker.
+
 # Installation
 
 There are two main ways to install this custom component within your Home Assistant instance:
@@ -37,5 +39,15 @@ There is a config flow for this integration. After installing the custom compone
 2. Click **+ Add integration** (bottom right) to set up a new integration
 3. Search for **Flameboss** and click on it
 4. You will be guided through the rest of the setup process via the config flow
+
+# Actions
+
+This integration does not provide any actions. Control devices through the entities it creates (for example with the standard `switch`, `light`, `select` or `climate` actions).
+
+# Removing the integration
+
+1. Go to **Settings** → **Devices & services**, open **Flame Boss**, click the three-dot menu (⋮) next to the entry and choose **Delete**. The MQTT broker entry, its devices and its entities are removed.
+2. If you installed through HACS, open **HACS**, find **Flame Boss**, click the three-dot menu (⋮) and choose **Remove**. For a manual install, delete the **custom_components/flameboss** folder instead.
+3. Restart Home Assistant.
 
 ---

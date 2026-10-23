@@ -1,35 +1,31 @@
 """Flame Boss integration."""
 from __future__ import annotations
 
-import logging
-
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
-from .const import DOMAIN, PLATFORMS
-from .coordinator import FlameBossCoordinator
-
-_LOGGER = logging.getLogger(__name__)
+from .const import PLATFORMS
+from .coordinator import FlameBossConfigEntry, FlameBossCoordinator
 
 
-async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Set up Flame Boss from a config entry."""
+async def async_setup_entry(hass: HomeAssistant, entry: FlameBossConfigEntry) -> bool:
+    """Set up Flame Boss from a config entry.
+
+    The MQTT broker (or the controllers behind it) may be offline when Home
+    Assistant starts and come and go afterwards, so setup never waits for it:
+    the client keeps reconnecting in the background and entities fill in as
+    soon as messages arrive.
+    """
     coordinator = FlameBossCoordinator(hass, entry)
-
-    hass.data.setdefault(DOMAIN, {})
-    hass.data[DOMAIN][entry.entry_id] = coordinator
-
     await coordinator.async_start()
+    entry.runtime_data = coordinator
+
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     return True
 
 
-async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+async def async_unload_entry(hass: HomeAssistant, entry: FlameBossConfigEntry) -> bool:
     """Unload a config entry."""
-    coordinator: FlameBossCoordinator = hass.data[DOMAIN][entry.entry_id]
-
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if unload_ok:
-        await coordinator.async_stop()
-        hass.data[DOMAIN].pop(entry.entry_id, None)
+        await entry.runtime_data.async_stop()
     return unload_ok

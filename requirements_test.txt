@@ -1,0 +1,6 @@
+pytest-homeassistant-custom-component
+pytest-cov
+ruff
+
+# Imported by the integration at module load.
+aiomqtt

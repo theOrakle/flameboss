@@ -5,23 +5,22 @@ from typing import Any
 
 from homeassistant.const import UnitOfTemperature
 
-from homeassistant.components.climate import ClimateEntity
-from homeassistant.components.climate.const import ClimateEntityFeature, HVACMode
+from homeassistant.components.climate import ClimateEntity, ClimateEntityFeature, HVACMode
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant, callback
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 
 from .const import SIGNAL_DEVICE_DISCOVERED, DOMAIN, CONF_DEVICE_IDS
-from .coordinator import FlameBossCoordinator
+from .coordinator import FlameBossConfigEntry, FlameBossCoordinator
 from .entity import FlameBossEntity
 
 _LOGGER = logging.getLogger(__name__)
 
 
-async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
-    coordinator = hass.data[DOMAIN][entry.entry_id]
+async def async_setup_entry(hass: HomeAssistant, entry: FlameBossConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
+    coordinator = entry.runtime_data
 
     device_ids = entry.options.get(CONF_DEVICE_IDS, entry.data.get(CONF_DEVICE_IDS, []))
     added: set[int] = set()
@@ -70,9 +69,6 @@ class FlameBossPitController(FlameBossEntity, ClimateEntity):
     _attr_hvac_modes = [HVACMode.HEAT, HVACMode.OFF]
     _attr_supported_features = ClimateEntityFeature.TARGET_TEMPERATURE
     _attr_temperature_unit = UnitOfTemperature.FAHRENHEIT
-    _attr_target_temperature_step = 1.0
-    _attr_min_temp = 100.0
-    _attr_max_temp = 450.0
 
     def __init__(self, coordinator: FlameBossCoordinator, entry: ConfigEntry, device_id: int) -> None:
         super().__init__(coordinator, entry, device_id)
@@ -107,9 +103,9 @@ class FlameBossPitController(FlameBossEntity, ClimateEntity):
             return
 
         t = float(temp)
-        if t < self._attr_min_temp:
-            t = self._attr_min_temp
-        elif t > self._attr_max_temp:
-            t = self._attr_max_temp
+        if t < self.min_temp:
+            t = self.min_temp
+        elif t > self.max_temp:
+            t = self.max_temp
 
         await self.coordinator.async_set_pit_setpoint_f(self._device_id, t)

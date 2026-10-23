@@ -1,7 +1,8 @@
 {
   "config": {
     "error": {
-      "host_required": "MQTT host is required (or ensure a broker advertises _mqtt._tcp.local.)."
+      "host_required": "MQTT host is required.",
+      "cannot_connect": "Could not connect to the MQTT broker. Check the host and port."
     },
     "step": {
       "user": {
@@ -13,6 +14,9 @@
         "description": "Enter your local MQTT broker host and port. Flame Boss controllers publish on topics like flameboss/DEVICE_ID/send/data.",
         "title": "Connect to Flame Boss local MQTT"
       }
+    },
+    "abort": {
+      "already_configured": "This MQTT broker is already configured."
     }
   },
   "options": {

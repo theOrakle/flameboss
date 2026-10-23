@@ -64,6 +64,24 @@ class FlameBossMqttConfig:
         return cls(host=host, port=port, username=username, password=password, device_ids=device_ids)
 
 
+async def async_test_connection(
+    host: str,
+    port: int,
+    username: str = "",
+    password: str = "",
+) -> None:
+    """Connect to the MQTT broker once, raising aiomqtt.MqttError / TimeoutError on failure."""
+    async with asyncio.timeout(10):
+        async with aiomqtt.Client(
+            hostname=host,
+            port=port,
+            username=username or None,
+            password=password or None,
+            keepalive=60,
+        ):
+            return
+
+
 class FlameBossMqttClient:
     """MQTT client for Flame Boss cloud using aiomqtt."""
 
@@ -77,6 +95,7 @@ class FlameBossMqttClient:
         self._task: asyncio.Task | None = None
         self._stop_event = asyncio.Event()
         self._tls_context: ssl.SSLContext | None = None
+        self._offline_logged = False
 
         # per (device_id, topic) monotonic timestamps to rate limit debug RX logging
         self._rx_log_last: dict[tuple[str, str], float] = {}
@@ -114,7 +133,7 @@ class FlameBossMqttClient:
                     username=username,
                     password=password,
                     tls_context=self._tls_context if self._cfg.use_tls else None,
-                    keepalive=60,
+            keepalive=60,
                 ) as client:
                     if self._cfg.device_ids:
                         topics: list[str] = []
@@ -132,6 +151,7 @@ class FlameBossMqttClient:
                     for t in topics:
                         await client.subscribe(t)
 
+                    self._offline_logged = False
                     _LOGGER.info("Connected to Flame Boss MQTT and subscribed to %s", topics)
                     _LOGGER.debug("Subscription mode: %s", "wildcard" if any(("#" in t) or ("+" in t) for t in topics) else "device-specific")
 
@@ -179,8 +199,18 @@ class FlameBossMqttClient:
                         except Exception as err:  # noqa: BLE001
                             _LOGGER.debug("Bad message from Flame Boss: %s", err, exc_info=True)
 
-            except aiomqtt.MqttError as err:
-                _LOGGER.debug("Flame Boss MQTT error: %s. Reconnecting in 5s", err)
+            except (aiomqtt.MqttError, OSError) as err:
+                # Broker down or unreachable: say so once, then keep retrying quietly.
+                if not self._offline_logged:
+                    self._offline_logged = True
+                    _LOGGER.warning(
+                        "Flame Boss MQTT broker %s:%s is unavailable (%s); will keep retrying",
+                        self._cfg.host,
+                        port,
+                        err,
+                    )
+                else:
+                    _LOGGER.debug("Flame Boss MQTT still unavailable: %s", err)
                 await asyncio.sleep(5)
             except asyncio.CancelledError:
                 break
@@ -202,7 +232,7 @@ class FlameBossMqttClient:
             username=username,
             password=password,
             tls_context=self._tls_context if self._cfg.use_tls else None,
-                    keepalive=60,
+            keepalive=60,
         ) as client:
             await client.publish(topic, payload, qos=0)
 
