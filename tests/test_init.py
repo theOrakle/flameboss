@@ -118,3 +118,38 @@ async def test_setup_does_not_wait_for_the_broker(
     mock_broker.assert_not_awaited()
     # Entities exist for the configured controller and simply have no values yet.
     assert hass.states.get("binary_sensor.flame_boss_1234_online").state == "off"
+
+
+async def test_online_survives_gaps_between_messages(
+    hass: HomeAssistant, mock_broker: MagicMock, mock_config_entry: MockConfigEntry
+) -> None:
+    """A controller that reports every 20-40 s must not flap offline between messages."""
+    from unittest.mock import patch
+
+    from custom_components.flameboss.const import OFFLINE_AFTER_SECONDS
+
+    await _setup(hass, mock_config_entry)
+    coordinator = mock_config_entry.runtime_data
+
+    with patch("custom_components.flameboss.coordinator.time.monotonic", return_value=1000.0):
+        coordinator._on_mqtt_message(DEVICE_ID, TEMPS_PAYLOAD, "flameboss/1234/send/data")
+        await hass.async_block_till_done()
+
+    # A 60 s silence (longer than the old 15 s limit) is still "online".
+    with patch("custom_components.flameboss.coordinator.time.monotonic", return_value=1060.0):
+        await coordinator._offline_check(None)
+    assert coordinator.is_device_online(DEVICE_ID) is True
+
+    # Only a gap beyond the configured limit marks it offline.
+    with patch(
+        "custom_components.flameboss.coordinator.time.monotonic",
+        return_value=1000.0 + OFFLINE_AFTER_SECONDS + 1,
+    ):
+        await coordinator._offline_check(None)
+    assert coordinator.is_device_online(DEVICE_ID) is False
+
+    # The next message brings it straight back.
+    with patch("custom_components.flameboss.coordinator.time.monotonic", return_value=1200.0):
+        coordinator._on_mqtt_message(DEVICE_ID, TEMPS_PAYLOAD, "flameboss/1234/send/data")
+        await hass.async_block_till_done()
+    assert coordinator.is_device_online(DEVICE_ID) is True

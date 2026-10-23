@@ -13,7 +13,7 @@ from homeassistant.helpers.event import async_call_later, async_track_time_inter
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from .api import FlameBossMqttClient, FlameBossMqttConfig
-from .const import DOMAIN, LOGGER, SIGNAL_DEVICE_DISCOVERED
+from .const import DOMAIN, LOGGER, OFFLINE_AFTER_SECONDS, SIGNAL_DEVICE_DISCOVERED
 
 
 def _device_discovered_signal(entry_id: str) -> str:
@@ -112,8 +112,7 @@ class FlameBossCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         async with self._lock:
             for did, last in list(self._last_message_monotonic.items()):
                 dev = dict((self.data or {}).get(str(did), {}))
-                # 3 x 5s retries == 15s
-                is_online = (now - last) <= 15.0
+                is_online = (now - last) <= OFFLINE_AFTER_SECONDS
                 if dev.get("online") != is_online:
                     dev["online"] = is_online
                     all_data = dict(self.data or {})

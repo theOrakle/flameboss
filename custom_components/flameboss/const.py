@@ -36,7 +36,8 @@ TOPIC_RECV = "flameboss/{device_id}/recv"
 
 SIGNAL_DEVICE_DISCOVERED = "flameboss_device_discovered"
 
-OFFLINE_AFTER_SECONDS = 15
+# The controller reports every ~20-40 s, so a short timeout flaps the Online sensor.
+OFFLINE_AFTER_SECONDS = 120
 
 
 TOPIC_SEND_FW = "flameboss/{device_id}/send/fw"
